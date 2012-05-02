@@ -78,7 +78,6 @@ License: This software is free for personal and commercial use.
 
                 sliderContainer.find('.quake-slider-images').css('display', 'none');
                 sliderContainer.find('.quake-slider-captions').css('display', 'none').addClass('quake-slider-caption-container');
-                //sliderContainer.prepend($('<img/>').attr('src', 'images/loading.gif').css({ left: frameWidth / 2, top: frameHeight / 2, position: 'absolute' }));
 
                 if (frameWidth % 2 != 0) circles--;
 
@@ -799,12 +798,12 @@ License: This software is free for personal and commercial use.
                     var bars = cols;
                     for (var i = 0; i < bars; i++) {
                         $('<div/>').css({ width: frameWidth,
-                            height: Math.ceil(frameWidth / bars),
+                            height: Math.ceil(frameHeight / bars),
                             marginLeft: -frameWidth,
                             top: Math.ceil((i * frameHeight / bars)),
                             position: 'absolute',
                             backgroundImage: 'url(' + getImageSrc(currentImage) + ')',
-                            backgroundPosition: '0px ' + (-(i * frameHeight / bars)) + 'px',
+                            backgroundPosition: '0px ' + (-Math.ceil((i * frameHeight / bars))) + 'px',
                             opacity: 0
                         }).addClass('quake-el').appendTo(sliderContainer);
                     }
@@ -829,12 +828,12 @@ License: This software is free for personal and commercial use.
                     var bars = cols;
                     for (var i = 0; i < bars; i++) {
                         $('<div/>').css({ width: frameWidth,
-                            height: Math.ceil(frameWidth / bars),
+                            height: Math.ceil(frameHeight / bars),
                             marginLeft: (i % 2 == 0) ? -frameWidth : frameWidth,
                             top: Math.ceil((i * frameHeight / bars)),
                             position: 'absolute',
                             backgroundImage: 'url(' + getImageSrc(currentImage) + ')',
-                            backgroundPosition: '0px ' + (-(i * frameHeight / bars)) + 'px',
+                            backgroundPosition: '0px ' + (-Math.ceil((i * frameHeight / bars))) + 'px',
                             opacity: 0
                         }).addClass('quake-el').appendTo(sliderContainer);
                     }
