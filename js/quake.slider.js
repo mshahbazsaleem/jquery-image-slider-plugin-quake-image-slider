@@ -1,42 +1,42 @@
-﻿/*
+﻿/*********************************************
+
 Author : EGrappler.com
-
 URL    : http://www.egrappler.com
+License: http://www.egrappler.com/license.
 
-License: This software is free for personal and commercial use. 
-         However, you can not resale it, re-distribute it as it is.
-         Neither you can upload it to your own server for download.
-         If you want to spread the word, please link back to the original post.
-*/
+*********************************************/
 (function ($) {
     $.fn.extend({
         quake: function (options) {
             var settings = $.extend({
-                frameWidth: 990,
-                frameHeight: 306,
                 animationSpeed: 500,
                 pauseTime: 4000,
                 rows: 4,
                 cols: 12,
                 thumbnails: true,
-                effects: ['randomFade', 'linearPeal', 'linearPealReverse', 'swirlFadeIn', 'swirlFadeOut',
-                 'diagonalFade', 'blind', 'barsUp', 'barsDown', 'blindFade', 'explode', 'explodeFancy', 'mixBars',
-                 'mixBarsFancy', 'fade', 'blindFadeReverse', 'slideIn', 'slideInFancy', 'slideLeft', 'slideRight',
-                 'slideUp', 'slideDown', 'fallingBlindFade', 'raisingBlindFade'],
+                thumbnailsPath: '',
+                applyEffectsRandomly: true,
+                effects: ['swirlFadeOutRotate', 'swirlFadeOutRotateFancy', 'swirlFadeIn', 'swirlFadeOut', 'slabs', 'spiral', 'spiralReverse',
+                'diagonalShow', 'diagonalShowReverse', 'spiralDimension', 'spiralReverseDimension', 'boxFadeIn', 'boxFadeOutOriginal',
+                'boxFadeOutOriginalRotate', 'diagonalFade', 'diagonalFadeReverse',
+                'randomFade', 'randomDimensions', 'boxes', 'explode', 'explodeFancy', 'linearPeal', 'linearPealReverse', 'linearPealDimensions',
+                'linearPealReverseDimensions', 'blind', 'blindHorizontal', 'barsUp', 'barsDown', 'barsDownReverse',
+                'blindFade', 'fallingBlindFade', 'raisingBlindFade', 'mixBars', 'mixBarsFancy', 'fade', 'blindFadeReverse', 'slideIn',
+                'slideInFancy', 'slideInReverse', 'chop', 'chopDimensions', 'chopDiagonal', 'chopDiagonalReverse', 
+                'slideLeft', 'slideRight', 'slideUp', 'slideDown'],
                 nextText: 'Next',
                 prevText: 'Prev',
+                navPlacement: 'outside',
+                navAlwaysVisible: false,
                 hasNextPrev: true,
                 captionOpacity: 0.5,
                 captionOrientations: ['right'],
                 captionAnimationSpeed: 1000,
-                thumbnailsPath: 'images/thumbs',
                 captionsSetup: null
             }, options);
 
             return this.each(function () {
                 //local variables
-                var frameWidth = settings.frameWidth;
-                var frameHeight = settings.frameHeight;
                 var cols = settings.cols;
                 var rows = settings.rows;
                 var smallThumbHeight = 10;
@@ -67,9 +67,17 @@ License: This software is free for personal and commercial use.
                 var totalImages;
                 var captions;
                 var visibleTumbnails = 0;
+                var sliderWidth = sliderContainer.width();
+                var sliderHeight = sliderContainer.height();
+                var theme = '';
+                var wBars = cols * 2; //for horizontal effects
+                var hBars = rows * 2; //for vertical effects
+                var noOfBoxes = rows * cols; //for box animations
+                var factor = 0;
+                var complete = 0;
 
                 var sliderWrapper = $('<div/>').addClass('quake-slider-wrapper');
-                sliderWrapper.css({ 'width': frameWidth, 'height': frameHeight });
+                sliderWrapper.css({ 'width': sliderWidth, 'height': sliderHeight });
                 if (!sliderContainer.hasClass('quake-slider'))
                     sliderContainer.addClass('quake-slider');
                 sliderContainer.before(sliderWrapper);
@@ -77,15 +85,19 @@ License: This software is free for personal and commercial use.
                 sliderWrapper.append(sliderContainer);
 
                 sliderContainer.find('.quake-slider-images').css('display', 'none');
-                sliderContainer.find('.quake-slider-captions').css('display', 'none').addClass('quake-slider-caption-container');
+                captionContainer = sliderContainer.find('.quake-slider-captions').css('display', 'none').addClass('quake-slider-caption-container');
 
-                if (frameWidth % 2 != 0) circles--;
+                if (sliderWidth % 2 != 0) circles--;
 
-                centerLeft = frameWidth / 2;
-                centerTop = frameHeight / 2;
+                centerLeft = sliderWidth / 2;
+                centerTop = sliderHeight / 2;
 
                 $(window).load(function () {
-                    //once page is fully loaded, go ahead with slider                    
+                    //once page is fully loaded, go ahead with slider    
+                    $('link[href*="quake.skin.css"]').each(function () {
+                        var skinParts = $(this).attr('href').split('/');
+                        theme = skinParts[skinParts.length - 2];
+                    });
                     navContainer = $('<div/>').addClass('quake-nav');
                     navContainer.append($('<a/>').addClass('quake-prev').html(settings.prevText)).append($('<a/>').addClass('quake-next').html(settings.nextText));
                     totalImages = sliderContainer.find('.quake-slider-images img').length;
@@ -99,25 +111,26 @@ License: This software is free for personal and commercial use.
                         else
                             images.push($(this).clone());
                     });
-
                     setup();
                     addNavigationControls();
                     runAnimation();
                     start();
                 });
                 function setup() {
-                    captionContainer = $('.quake-slider-caption-container').css('opacity', settings.captionOpacity).html('');
+                    captionContainer.css('opacity', settings.captionOpacity).html('');
+
                     sliderContainer.html('');
                     var link = $('<a/>').addClass('quake-link');
                     link.css('display', 'none');
-                    link.css('width', frameWidth);
-                    link.css('height', frameHeight);
+                    link.css('width', sliderWidth);
+                    link.css('height', sliderHeight);
                     sliderContainer.prepend(link);
-
                     if (settings.hasNextPrev) {
-                        sliderContainer.append(navContainer);
-                        navContainer.hide();
-                        sliderContainer.mouseenter(function () { stop(); navContainer.show(); }).mouseleave(function () { navContainer.hide(); start(); });
+                        sliderWrapper.prepend(navContainer);
+                        if (!settings.navAlwaysVisible) {
+                            navContainer.hide();
+                            sliderWrapper.mouseenter(function () { navContainer.show(); setupNavVisibility(true); }).mouseleave(function () { navContainer.hide(); setupNavVisibility(false); });
+                        }
                         navContainer.find('.quake-prev').click(function () {
                             if (!isAnimating) {
                                 stop();
@@ -126,6 +139,7 @@ License: This software is free for personal and commercial use.
                                 if (currentImageIndex < 0)
                                     currentImageIndex = images.length - 1;
                                 runAnimation();
+                                start();
                             }
                         });
 
@@ -133,10 +147,20 @@ License: This software is free for personal and commercial use.
                             if (!isAnimating) {
                                 stop();
                                 runAnimation();
+                                start();
                             }
                         });
                     }
-                    sliderContainer.append(captionContainer);
+                    else {
+                        if (!settings.navAlwaysVisible) {
+                            sliderWrapper.mouseenter(function () { setupNavVisibility(true); }).mouseleave(function () { setupNavVisibility(false); });
+                        }
+                    }
+                    sliderWrapper.mouseenter(stop).mouseleave(start);
+                    if (theme == 'violet')
+                        sliderWrapper.append(captionContainer);
+                    else
+                        sliderContainer.append(captionContainer);
                 }
                 function start() {
                     animationInterval = setInterval(runAnimation, pauseTime);
@@ -146,10 +170,21 @@ License: This software is free for personal and commercial use.
                     clearInterval(animationInterval);
                     animationInterval = null;
                 }
+                function setupNavVisibility(show) {
+                    if (settings.navPlacement == 'inside') {
+                        if (show)
+                            sliderWrapper.find('.quake-nav-wrapper').show();
+
+                        else
+                            sliderWrapper.find('.quake-nav-wrapper').hide();
+                    }
+                }
                 function addNavigationControls() {
-                    var navWrapper = $('<div/>').addClass('quake-nav-wrapper');
+                    var navWrapper = $('<div/>').addClass('quake-nav-wrapper ' + settings.navPlacement + '');
                     var nav = $('<div/>').addClass('quake-nav-container');
                     navWrapper.append(nav);
+                    if (settings.hasNextPrev && !settings.navAlwaysVisible)
+                        navWrapper.hide();
                     $(images).each(function (index, image) {
                         nav.append($('<a/>').attr('href', '#').attr('rel', index).addClass('quake-nav-control').html(index));
                     });
@@ -162,6 +197,17 @@ License: This software is free for personal and commercial use.
                         var thumbnail = $('<div/>').css({ display: 'none', opacity: '0' });
                         thumbnail.addClass('quake-thumbnail').append($('<div/>').addClass('quake-thumbnail-preview').append($('<img/>')));
                         navWrapper.append(thumbnail);
+                        var twidth = thumbnail.find('.quake-thumbnail-preview').width();
+                        var theight = thumbnail.find('.quake-thumbnail-preview').height();
+
+                        var ar = sliderWidth / sliderHeight;
+                        var ar1 = twidth / theight;
+                        if (ar - ar1 > 1) {
+                            ar = (ar + ar1) / (ar - ar1);
+                        }
+                        if (ar > 0)
+                            twidth = ar * theight;
+
                         $('.quake-nav-container a').live('mouseenter', function () {
                             var center = $(this).position().left + $(this).outerWidth() / 2;
                             var left = center - thumbnail.outerWidth() / 2;
@@ -170,16 +216,18 @@ License: This software is free for personal and commercial use.
                             var img = images[parseInt($(this).html())];
 
                             if (img != null) {
-                                var parts = getImageSrc(img).split('/');
-                                var imgPath = settings.thumbnailsPath + '/' + parts[parts.length - 1];
-                                thumbnail.find('img').attr('src', imgPath);
+                                var imgPath = getImageSrc(img);
+                                if (settings.thumbnailsPath != '') {
+                                    var parts = getImageSrc(img).split('/');
+                                    imgPath = settings.thumbnailsPath + '/' + parts[parts.length - 1];
+                                }
+                                thumbnail.find('img').attr('src', imgPath).css({ width: twidth, height: theight });
                                 thumbnail.css({ left: left, top: top, display: 'block' }).stop(true, true).animate({ opacity: 1 }, 500);
                             }
                         });
 
                         $('.quake-nav-container a').live('mouseleave', function () {
                             thumbnail.css({ display: 'none', opacity: 0 });
-
                         });
                     }
 
@@ -194,16 +242,12 @@ License: This software is free for personal and commercial use.
                     }
                     return false;
                 }
-
                 //Animations 
                 function animateRandomFade() {
                     createBoxes();
-                    var factor = 0;
-                    var complete = 0;
                     var randomElements = $(".quake-el").get().sort(function () {
                         return Math.round(Math.random()) - 0.5
                     });
-
                     $(randomElements).each(function (index) {
                         var pos = coordinates[index];
                         var strPost = 'left:' + pos.left + '; top:' + pos.top + '';
@@ -226,36 +270,86 @@ License: This software is free for personal and commercial use.
                             }, factor);
                             factor += timeFactor * 2;
                         }
-
                     });
                 }
-
-
-                function animateLinearPeal() {
+                function animateRandomFadeDimensions() {
                     createBoxes();
-                    var factor = 0;
-                    var complete = 0;
-                    var total = $('.quake-el').length;
-                    $('.quake-el', sliderContainer).each(function () {
+                    var w = Math.ceil(sliderWidth / cols);
+                    var h = Math.ceil(sliderHeight / rows);
+                    $(".quake-el").css({ width: 0, height: 0, opacity: 0, display: 'block' });
+                    var randomElements = $(".quake-el").get().sort(function () {
+                        return Math.round(Math.random()) - 0.5
+                    });
+                    $(randomElements).each(function (index) {
+                        var pos = coordinates[index];
+                        var strPost = 'left:' + pos.left + '; top:' + pos.top + '';
+                        $(this).css('background-position', strPost);
+                    });
+                    $(randomElements).each(function (index) {
+                        if (complete < randomElements.length) {
+                            var el = $(this);
+                            setTimeout(function () {
+                                try {
+                                    el.animate({ opacity: 1, width: w, height: h }, animationSpeed, function () {
+                                        complete++;
+                                        if (complete == randomElements.length) {
+                                            animationComplete();
+                                        }
+                                    });
+                                }
+                                catch (ex) { }
+                            }, factor);
+                            factor += timeFactor * 2;
+                        }
+                    });
+                }
+                function animateBoxes() {
+                    createBoxes();
+                    var w = Math.ceil(sliderWidth / cols);
+                    var h = Math.ceil(sliderHeight / rows);
+                    $(".quake-el").css({ width: 0, height: 0, opacity: 0, display: 'block' });
+
+                    $(".quake-el").each(function (index) {
+                        //if (complete < randomElements.length) {
                         var el = $(this);
-                        setTimeout(function () {
-                            el.fadeIn(animationSpeed, function () {
+                        //setTimeout(function () {
+                        try {
+                            el.animate({ opacity: 1, width: w, height: h }, animationSpeed, function () {
                                 complete++;
-                                if (complete == total) {
+                                if (complete == noOfBoxes) {
                                     animationComplete();
                                 }
                             });
-                        }, factor * 3);
+                        }
+                        catch (ex) { }
+                        //}, factor);
+                        factor += timeFactor * 2;
+                        //}
+                    });
+                }
+                function animateLinearPealDimensions() {
+                    createBoxes();
+                    var w = Math.ceil(sliderWidth / cols);
+                    var h = Math.ceil(sliderHeight / rows);
+                    $('.quake-el', sliderContainer).each(function () {
+                        var el = $(this);
+                        setTimeout(function () {
+                            el.css({ width: 0, height: 0, opacity: 1, display: 'block' }).animate({ width: w, height: h }, animationSpeed, function () {
+                                complete++;
+                                if (complete == noOfBoxes) {
+                                    animationComplete();
+                                }
+                            });
+                        }, factor * 1.5);
                         factor += timeFactor;
                     });
                 }
-                function animateReversePeal() {
+                function animateReversePealDimensions() {
                     createBoxes();
-                    var factor = 0;
-                    var complete = 0;
+                    var w = Math.ceil(sliderWidth / cols);
+                    var h = Math.ceil(sliderHeight / rows);
                     var indeces = new Array();
-
-                    $('.quake-el').each(function (index) {
+                    $('.quake-el', sliderContainer).each(function (index) {
                         swapDirection(index);
                         if (direction == 'forward') {
                             indeces.push(index);
@@ -266,7 +360,49 @@ License: This software is free for personal and commercial use.
                         }
                     });
 
-                    $('.quake-el').each(function (index) {
+                    $('.quake-el', sliderContainer).each(function (index) {
+                        setTimeout(function () {
+                            $('.quake-el:eq(' + indeces[index] + ')', sliderContainer).css({ width: 0, height: h, opacity: 1, display: 'block' }).animate({ width: w, height: h }, animationSpeed / 2, function () {
+                                complete++;
+                                if (complete == indeces.length) {
+                                    animationComplete();
+                                }
+                            });
+
+                        }, factor * 1.5);
+                        factor += timeFactor;
+                    });
+                }
+                function animateLinearPeal() {
+                    createBoxes();
+                    $('.quake-el', sliderContainer).each(function () {
+                        var el = $(this);
+                        setTimeout(function () {
+                            el.fadeIn(animationSpeed, function () {
+                                complete++;
+                                if (complete == noOfBoxes) {
+                                    animationComplete();
+                                }
+                            });
+                        }, factor * 1.3);
+                        factor += timeFactor;
+                    });
+                }
+                function animateReversePeal() {
+                    createBoxes();
+                    var indeces = new Array();
+                    $('.quake-el', sliderContainer).each(function (index) {
+                        swapDirection(index);
+                        if (direction == 'forward') {
+                            indeces.push(index);
+                        }
+                        else {
+                            var en = (currentRow * cols - 1) + (((currentRow - 1) * cols) - index);
+                            indeces.push(en);
+                        }
+                    });
+
+                    $('.quake-el', sliderContainer).each(function (index) {
                         setTimeout(function () {
                             $('.quake-el:eq(' + indeces[index] + ')', sliderContainer).fadeIn(animationSpeed / 2, function () {
                                 complete++;
@@ -280,11 +416,53 @@ License: This software is free for personal and commercial use.
                     });
                 }
 
+                function animateSpiral(reverse, animateSize) {
+                    createBoxes();
+                    var w = Math.ceil(sliderWidth / cols);
+                    var h = Math.ceil(sliderHeight / rows);
+                    //create a two dimentional array using rows and colmns, then transform arry to spiral
+                    if (animateSize)
+                        $('.quake-el', sliderContainer).css({ width: 0, height: 0, opacity: 1 });
+                    var twoDArr = new Array();
+                    var val = 0;
+                    for (var i = 0; i < rows; i++) {
+                        var subArray = new Array();
+                        twoDArr.push(subArray);
+                        for (var j = 0; j < cols; j++) {
+                            subArray.push(val);
+                            val++;
+                        }
+                    }
+                    var indeces = new Array();
+                    indeces = spiralify(twoDArr);
+                    if (reverse) indeces.reverse();
+
+                    $('.quake-el', sliderContainer).each(function (index) {
+                        setTimeout(function () {
+                            if (!animateSize) {
+                                $('.quake-el:eq(' + indeces[index] + ')', sliderContainer).fadeIn(animationSpeed / 2, function () {
+                                    complete++;
+                                    if (complete == indeces.length) {
+                                        animationComplete();
+                                    }
+                                });
+                            }
+                            else {
+                                $('.quake-el:eq(' + indeces[index] + ')', sliderContainer).show().animate({ width: w, height: h }, animationSpeed / 2, function () {
+                                    complete++;
+                                    if (complete == indeces.length) {
+                                        animationComplete();
+                                    }
+                                });
+                            }
+
+                        }, factor * 1.5);
+                        factor += timeFactor;
+                    });
+                }
 
                 function animateSwirlFadeIn() {
                     createCircles(currentImageIndex);
-                    var factor = 0;
-                    var complete = 0;
                     var radea = new Array();
                     $('.quake-el', sliderContainer).each(function (index) {
                         radea.push(minCircumeference * (index + 1));
@@ -294,6 +472,74 @@ License: This software is free for personal and commercial use.
                         var el = $(this);
                         setTimeout(function () {
                             el.css({ borderRadius: radea[index] }).animate({ opacity: 1, zIndex: 0 }, animationSpeed, function () {
+                                complete++;
+                                if (complete == radea.length) {
+                                    animationComplete();
+                                }
+                            });
+                        }, factor);
+                        factor += timeFactor;
+                    });
+                }
+                function animateBoxFadeOutOriginal(rotate) {
+                    if (previousImage == null) previousImage = images[images.length - 1];
+                    var divImage = $('<div/>').css({
+                        zIndex: 1,
+                        backgroundImage: 'url(' + getImageSrc(currentImage) + ')',
+                        backgroundPosition: 'center',
+                        backgroundRepeat: 'no-repeat',
+                        position: 'absolute',
+                        width: '100%',
+                        height: '100%'
+                    }).addClass('quake-fi');
+
+                    createCircles(previousImageIndex);
+                    sliderContainer.append(divImage);
+
+                    var boxes = $('.quake-el', sliderContainer).css('opacity', 1).length;
+                    var widthFactor = sliderWidth / animationSpeed;
+                    var angle = 0;
+                    if (rotate) angle = 360;
+                    $('.quake-el', sliderContainer).each(function (index) {
+                        var el = $(this);
+                        setTimeout(function () {
+                            el.animate({ opacity: 0, scale: '-=1', rotate: '+=' + angle + 'deg' }, animationSpeed, function () {
+                                complete++;
+                                if (complete == boxes - 1) {
+                                    animationComplete();
+                                }
+                            });
+                        }, factor);
+                        factor += timeFactor;
+                    });
+                }
+
+                function animateBoxFadeIn() {
+                    var boxes = circles * 2;
+                    var imageIndex = currentImageIndex;
+                    minCircumeference = sliderWidth / boxes;
+                    minCircumeference++;
+                    zindex = 100;
+                    timeFactor = animationSpeed / circles;
+                    for (var i = 0; i < boxes; i++) {
+                        var op = i + 1;
+                        op /= boxes;
+                        var width = (i + 1) * minCircumeference;
+                        var positionLeft = centerLeft - width / 2;
+                        var positionTop = centerTop - width / 2;
+                        var radius = (i + 1) * minCircumeference;
+                        var box = $('<div/>').css({ backgroundImage: 'url(' + getImageSrc(images[imageIndex]) + ')', backgroundPosition: 'center', backgroundRepeat: 'no-repeat', left: positionLeft, top: positionTop, position: 'absolute', width: width, height: width, opacity: 0 }).addClass('quake-el');
+
+                        sliderContainer.append(box);
+                    }
+                    var radea = new Array();
+                    $('.quake-el', sliderContainer).each(function (index) {
+                        radea.push(minCircumeference * (index + 1));
+                    });
+                    $('.quake-el', sliderContainer).each(function (index) {
+                        var el = $(this);
+                        setTimeout(function () {
+                            el.animate({ opacity: 1 }, animationSpeed, function () {
                                 complete++;
                                 if (complete == radea.length) {
                                     animationComplete();
@@ -314,10 +560,10 @@ License: This software is free for personal and commercial use.
                         width: '100%',
                         height: '100%'
 
-                    }).addClass('quake-fi'); //quake-fi = quake-fullimage
+                    }).addClass('quake-fi');
 
                     createCircles(previousImageIndex);
-                    $('.quake-el', sliderContainer).css('opacity', '1', zindex, 2);
+                    $('.quake-el', sliderContainer).css({ 'opacity': 1, zIndex: 2 });
 
                     var radea = new Array();
                     $('.quake-el', sliderContainer).each(function (index) {
@@ -331,46 +577,68 @@ License: This software is free for personal and commercial use.
                         hideIt(1);
                     }, 0);
                 }
-                function hideIt(i) {
-                    var factor = 0;
-                    var complete = 0;
-                    var index = circles - i;
-                    var op = index + 1;
-                    op /= 10;
-                    op = 1 - op;
-                    $('.quake-el:eq(' + index + ')', sliderContainer).animate({ opacity: op }, timeFactor, function () {
-                        if (i < $('.quake-el', sliderContainer).length - 1) {
-                            i++;
-                            hideIt(i);
-                        }
-                        else {
-                            $('.quake-el', sliderContainer).animate({ opacity: 0 }, 500);
-                            setTimeout(animationComplete, 501);
-                        }
+                function animateSwirlFadeOutRotate(toggle) {
+                    var divImage = $('<div/>').css({
+                        zIndex: 1,
+                        backgroundImage: 'url(' + getImageSrc(currentImage) + ')',
+                        backgroundPosition: 'center',
+                        backgroundRepeat: 'no-repeat',
+                        position: 'absolute',
+                        width: '100%',
+                        height: '100%'
+
+                    }).addClass('quake-fi');
+
+                    createCircles(previousImageIndex);
+                    $('.quake-el', sliderContainer).css({ 'opacity': 1 });
+                    var radea = new Array();
+                    var elements = new Array();
+                    $('.quake-el', sliderContainer).css('background-repeat', 'repeat').each(function (index) {
+                        $(this).css({ borderRadius: minCircumeference * (index + 1) });
+                        elements.push(index);
+                    });
+                    sliderContainer.append(divImage);
+                    elements = elements.reverse();
+                    var total = elements.length;
+                    var degree = 20;
+                    $(elements).each(function (element, index) {
+                        var el = $('.quake-el', sliderContainer).eq(element);
+                        degree += 5;
+                        var angle = degree;
+                        if (toggle)
+                            if (index % 2 != 0) angle = -degree;
+                        factor = 100 * index;
+                        setTimeout(function () {
+                            el.animate({ opacity: 0, rotate: angle + 'deg' }, animationSpeed, function () {
+                                complete++;
+                                if (complete == total - 1)
+                                    animationComplete();
+                            });
+
+                        }, factor);
                     });
                 }
-                function animateDiagonally() {
-                    var factor = 0;
-                    var complete = 0;
-                    var w = Math.ceil(frameWidth / cols);
-                    var h = Math.ceil(frameHeight / rows);
+
+                function animateDiagonally(reverse, animateSize) {
+
+                    var w = Math.ceil(sliderWidth / cols);
+                    var h = Math.ceil(sliderHeight / rows);
 
                     for (var row = 0; row < rows; row++) {
                         for (var col = 0; col < cols; col++) {
                             $('<div/>').addClass('quake-el').css({
-                                width: w,
-                                height: h,
+                                width: animateSize ? 0 : w,
+                                height: animateSize ? 0 : h,
                                 left: Math.ceil(col * w),
                                 top: Math.ceil(row * h),
                                 position: 'absolute',
-                                opacity: 0,
+                                opacity: animateSize ? 1 : 0,
                                 backgroundImage: 'url(' + getImageSrc(currentImage) + ')',
                                 backgroundPosition: '' + (-(col * w)) + 'px ' + (-(row * h)) + 'px'
                             }).appendTo(sliderContainer);
                         }
                     }
-                    var total = rows * cols;
-                    timeFactor = animationSpeed / total;
+                    timeFactor = animationSpeed / noOfBoxes;
                     var diagonal = new Array();
                     for (var i = 0; i < rows + cols - 1; i++) {
                         diagonal.push(i);
@@ -379,13 +647,13 @@ License: This software is free for personal and commercial use.
                             diagonal[i].push((j * cols) + i - j);
                         }
                     }
-
+                    if (reverse) diagonal.reverse();
                     $(diagonal).each(function (index, elements) {
                         setTimeout(function () {
                             $(elements).each(function (i, val) {
-                                $('.quake-el:eq(' + val + ')').animate({ opacity: 1 }, animationSpeed, function () {
+                                $('.quake-el:eq(' + val + ')').animate({ opacity: 1, width: w, height: h }, animationSpeed, function () {
                                     complete++;
-                                    if (complete == total) {
+                                    if (complete == noOfBoxes) {
                                         animationComplete();
                                     }
                                 });
@@ -393,25 +661,21 @@ License: This software is free for personal and commercial use.
 
                         }, factor * 6);
                         factor += timeFactor;
-
                     });
-
                 }
 
                 function animateBlind() {
-                    var bars = cols * 2;
-                    var factor = 0;
-                    var complete = 0;
-                    var w = frameWidth / bars;
+                    var bars = wBars;
+                    var w = sliderWidth / bars;
                     if (w % 10 != 0) w++;
                     for (var i = 0; i < bars; i++) {
                         $('<div/>').css({
                             width: 0,
-                            height: frameHeight,
-                            left: Math.ceil((i * frameWidth / bars)),
+                            height: sliderHeight,
+                            left: Math.ceil((i * sliderWidth / bars)),
                             position: 'absolute',
                             backgroundImage: 'url(' + getImageSrc(currentImage) + ')',
-                            backgroundPosition: '' + (-(i * frameWidth / bars)) + 'px 0px'
+                            backgroundPosition: '' + (-(i * sliderWidth / bars)) + 'px 0px'
                         }).addClass('quake-el').appendTo(sliderContainer);
                     }
                     timeFactor = animationSpeed / bars;
@@ -430,20 +694,79 @@ License: This software is free for personal and commercial use.
                     });
                 }
 
+                function animateSlabs() {
+                    var bars = wBars;
+                    var w = sliderWidth / bars;
+                    if (w % 10 != 0) w++;
+                    for (var i = 0; i < bars; i++) {
+                        $('<div/>').css({
+                            width: w,
+                            height: sliderHeight,
+                            left: -w,
+                            position: 'absolute',
+                            backgroundImage: 'url(' + getImageSrc(currentImage) + ')',
+                            backgroundPosition: '' + (-(i * sliderWidth / bars)) + 'px 0px',
+                            opacity: 0
+                        }).addClass('quake-el').appendTo(sliderContainer);
+                    }
+                    timeFactor = animationSpeed / bars;
+                    $('.quake-el', sliderContainer).each(function (index) {
+                        var i = bars - index;
+                        var el = $('.quake-el', sliderContainer).eq(i);
+                        var left = Math.ceil((i * sliderWidth / bars));
+                        setTimeout(function () {
+                            el.animate({ left: left, opacity: 1 }, animationSpeed);
+                        }, factor);
+                        factor += timeFactor;
+                    });
+                    factor -= timeFactor;
+                    setTimeout(function () {
+                        $('.quake-el', sliderContainer).eq(0).animate({ left: 0, opacity: 1 }, animationSpeed, animationComplete);
+                    }, factor);
+                }
+
+                function animateBlindHorizontal() {
+                    var bars = hBars;
+                    var h = sliderHeight / bars;
+                    if (h % 10 != 0) h++;
+                    for (var i = 0; i < bars; i++) {
+                        $('<div/>').css({
+                            width: sliderWidth,
+                            height: 0,
+                            top: Math.ceil((i * sliderHeight / bars)),
+                            position: 'absolute',
+                            backgroundImage: 'url(' + getImageSrc(currentImage) + ')',
+                            backgroundPosition: '0px ' + (-(i * sliderHeight / bars)) + 'px'
+                        }).addClass('quake-el').appendTo(sliderContainer);
+                    }
+                    timeFactor = animationSpeed / bars;
+                    $('.quake-el', sliderContainer).each(function (index) {
+                        var el = $(this);
+                        setTimeout(function () {
+                            el.animate({ height: h }, animationSpeed, function () {
+                                complete++;
+                                if (complete == bars) {
+                                    animationComplete();
+                                }
+                            });
+
+                        }, factor);
+                        factor += timeFactor;
+                    });
+                }
+
                 function animateBlindFade() {
-                    var bars = cols * 2;
-                    var factor = 0;
-                    var complete = 0;
-                    var w = frameWidth / bars;
+                    var bars = wBars;
+                    var w = sliderWidth / bars;
                     if (w % 10 != 0) w += 1;
                     for (var i = 0; i < bars; i++) {
                         $('<div/>').css({
                             width: w,
-                            height: frameHeight,
-                            left: Math.ceil((i * frameWidth / bars)),
+                            height: sliderHeight,
+                            left: Math.ceil((i * sliderWidth / bars)),
                             position: 'absolute',
                             backgroundImage: 'url(' + getImageSrc(currentImage) + ')',
-                            backgroundPosition: '' + (-(i * frameWidth / bars)) + 'px 0px',
+                            backgroundPosition: '' + (-(i * sliderWidth / bars)) + 'px 0px',
                             opacity: 0
                         }).addClass('quake-el').appendTo(sliderContainer);
                     }
@@ -463,19 +786,17 @@ License: This software is free for personal and commercial use.
                     });
                 }
                 function animateBlindFadeReverse() {
-                    var bars = cols * 2;
-                    var factor = 0;
-                    var complete = 0;
-                    var w = frameWidth / bars;
+                    var bars = wBars;
+                    var w = sliderWidth / bars;
                     if (w % 10 != 0) w += 1;
                     for (var i = 0; i < bars; i++) {
                         $('<div/>').css({
                             width: w,
-                            height: frameHeight,
-                            left: Math.ceil((i * frameWidth / bars)),
+                            height: sliderHeight,
+                            left: Math.ceil((i * sliderWidth / bars)),
                             position: 'absolute',
                             backgroundImage: 'url(' + getImageSrc(currentImage) + ')',
-                            backgroundPosition: '' + (-(i * frameWidth / bars)) + 'px 0px',
+                            backgroundPosition: '' + (-(i * sliderWidth / bars)) + 'px 0px',
                             opacity: 0
                         }).addClass('quake-el').appendTo(sliderContainer);
                     }
@@ -494,22 +815,19 @@ License: This software is free for personal and commercial use.
                         factor += timeFactor;
                     });
                 }
-
                 function animateFallingBlindFade() {
-                    var bars = rows * 2;
-                    var factor = 0;
-                    var complete = 0;
-                    var h = frameHeight / bars;
+                    var bars = hBars;
+                    var h = sliderHeight / bars;
                     if (h % 10 != 0) h += 1;
                     for (var i = 0; i < bars; i++) {
                         $('<div/>').css({
-                            width: frameWidth,
+                            width: sliderWidth,
                             height: h,
                             left: 0,
-                            top: Math.ceil((i * frameHeight / bars)),
+                            top: Math.ceil((i * sliderHeight / bars)),
                             position: 'absolute',
                             backgroundImage: 'url(' + getImageSrc(currentImage) + ')',
-                            backgroundPosition: '0px ' + (-(i * frameHeight / bars)) + 'px',
+                            backgroundPosition: '0px ' + (-(i * sliderHeight / bars)) + 'px',
                             opacity: 0
                         }).addClass('quake-el').appendTo(sliderContainer);
                     }
@@ -519,7 +837,7 @@ License: This software is free for personal and commercial use.
                         setTimeout(function () {
                             el.animate({ opacity: 1 }, animationSpeed, function () {
                                 complete++;
-                                if (complete == bars - 1) {
+                                if (complete == bars) {
                                     animationComplete();
                                 }
                             });
@@ -529,20 +847,18 @@ License: This software is free for personal and commercial use.
                     });
                 }
                 function animateRaisingBlindFade() {
-                    var bars = rows * 2;
-                    var factor = 0;
-                    var complete = 0;
-                    var h = frameHeight / bars;
+                    var bars = hBars;
+                    var h = sliderHeight / bars;
                     if (h % 10 != 0) h += 1;
                     for (var i = 0; i < bars; i++) {
                         $('<div/>').css({
-                            width: frameWidth,
+                            width: sliderWidth,
                             height: h,
                             left: 0,
-                            top: Math.ceil((i * frameHeight / bars)),
+                            top: Math.ceil((i * sliderHeight / bars)),
                             position: 'absolute',
                             backgroundImage: 'url(' + getImageSrc(currentImage) + ')',
-                            backgroundPosition: '0px ' + (-(i * frameHeight / bars)) + 'px',
+                            backgroundPosition: '0px ' + (-(i * sliderHeight / bars)) + 'px',
                             opacity: 0
                         }).addClass('quake-el').appendTo(sliderContainer);
                     }
@@ -552,7 +868,7 @@ License: This software is free for personal and commercial use.
                         setTimeout(function () {
                             el.animate({ opacity: 1 }, animationSpeed, function () {
                                 complete++;
-                                if (complete == bars - 1) {
+                                if (complete == bars) {
                                     animationComplete();
                                 }
                             });
@@ -562,19 +878,16 @@ License: This software is free for personal and commercial use.
                     });
                 }
                 function animateMixBars() {
-
-                    var factor = 0;
-                    var complete = 0;
-                    var bars = (cols * rows) / 2;
+                    var bars = wBars;
                     timeFactor = animationSpeed / bars;
                     for (var i = 0; i < bars; i++) {
-                        $('<div/>').css({ width: Math.ceil(frameWidth / bars),
-                            height: frameHeight,
-                            marginTop: (i % 2 == 0) ? -(frameHeight) : frameHeight,
-                            left: Math.ceil((i * frameWidth / bars)),
+                        $('<div/>').css({ width: Math.ceil(sliderWidth / bars),
+                            height: sliderHeight,
+                            marginTop: (i % 2 == 0) ? -(sliderHeight) : sliderHeight,
+                            left: Math.ceil((i * sliderWidth / bars)),
                             position: 'absolute',
                             backgroundImage: 'url(' + getImageSrc(currentImage) + ')',
-                            backgroundPosition: '' + (-(i * frameWidth / bars)) + 'px 0px',
+                            backgroundPosition: '' + (-(i * sliderWidth / bars)) + 'px 0px',
                             opacity: 0
                         }).addClass('quake-el').appendTo(sliderContainer);
                     }
@@ -592,18 +905,16 @@ License: This software is free for personal and commercial use.
                     });
                 }
                 function animateMixBarsFancy() {
-                    var factor = 0;
-                    var complete = 0;
-                    var bars = (cols * rows) / 2;
+                    var bars = wBars;
                     timeFactor = animationSpeed / bars;
                     for (var i = 0; i < bars; i++) {
-                        $('<div/>').css({ width: Math.ceil(frameWidth / bars),
-                            height: frameHeight,
-                            marginTop: (i % 2 == 0) ? -(frameHeight) : frameHeight,
-                            left: Math.ceil((i * frameWidth / bars)),
+                        $('<div/>').css({ width: Math.ceil(sliderWidth / bars),
+                            height: sliderHeight,
+                            marginTop: (i % 2 == 0) ? -(sliderHeight) : sliderHeight,
+                            left: Math.ceil((i * sliderWidth / bars)),
                             position: 'absolute',
                             backgroundImage: 'url(' + getImageSrc(currentImage) + ')',
-                            backgroundPosition: '' + (-(i * frameWidth / bars)) + 'px 0px',
+                            backgroundPosition: '' + (-(i * sliderWidth / bars)) + 'px 0px',
                             opacity: 0
                         }).addClass('quake-el').appendTo(sliderContainer);
                     }
@@ -627,40 +938,40 @@ License: This software is free for personal and commercial use.
                         factor += timeFactor;
                     });
                 }
-                function showBars(bars) {
-                    bars.each(function (index) {
-                        var el = $(this);
-                        setTimeout(function () {
-                            el.animate({ marginTop: 0, opacity: 1 }, animationSpeed, function () {
-                                complete++;
-                                if (complete == bars - 1)
-                                    animationComplete();
-                            });
-                        }, factor * 1.5);
-                        factor += timeFactor;
-                    });
-                }
-                function animateBarDown() {
-                    var factor = 0;
-                    var complete = 0;
-                    var bars = (cols * rows) / 2;
+                function animateBarsDown(reverse) {
+                    var bars = wBars;
                     timeFactor = animationSpeed / bars;
+                    if (previousImage == null) previousImage = currentImage;
                     for (var i = 0; i < bars; i++) {
-                        $('<div/>').css({ width: Math.ceil(frameWidth / bars),
-                            height: frameHeight,
-                            marginTop: -(frameHeight),
-                            left: Math.ceil((i * frameWidth / bars)),
+                        $('<div/>').css({ width: Math.ceil(sliderWidth / bars),
+                            height: sliderHeight,
+                            marginTop: reverse ? 0 : -(sliderHeight),
+                            left: Math.ceil((i * sliderWidth / bars)),
                             position: 'absolute',
-                            backgroundImage: 'url(' + getImageSrc(currentImage) + ')',
-                            backgroundPosition: '' + (-(i * frameWidth / bars)) + 'px 0px',
+                            backgroundImage: 'url(' + getImageSrc(reverse ? previousImage : currentImage) + ')',
+                            backgroundPosition: '' + (-(i * sliderWidth / bars)) + 'px 0px',
                             opacity: 0
                         }).addClass('quake-el').appendTo(sliderContainer);
                     }
 
+                    var divImage = $('<div/>').css({
+                        zIndex: 0,
+                        backgroundImage: 'url(' + getImageSrc(currentImage) + ')',
+                        backgroundPosition: 'center',
+                        backgroundRepeat: 'no-repeat',
+                        position: 'absolute',
+                        width: '100%',
+                        height: '100%'
+                    }).addClass('quake-fi');
+
+                    if (reverse) {
+                        $('.quake-el', sliderContainer).css({ 'opacity': 1, zIndex: 2 });
+                        sliderContainer.append(divImage);
+                    }
                     $('.quake-el', sliderContainer).each(function (index) {
                         var el = $(this);
                         setTimeout(function () {
-                            el.animate({ marginTop: 0, opacity: 1 }, animationSpeed, function () {
+                            el.animate({ marginTop: (reverse ? -sliderHeight : 0), opacity: 1 }, animationSpeed, function () {
                                 complete++;
                                 if (complete == bars - 1)
                                     animationComplete();
@@ -670,18 +981,16 @@ License: This software is free for personal and commercial use.
                     });
                 }
                 function animateBarUp() {
-                    var factor = 0;
-                    var complete = 0;
-                    var bars = (cols * rows) / 2;
+                    var bars = wBars;
                     timeFactor = animationSpeed / bars;
                     for (var i = 0; i < bars; i++) {
-                        $('<div/>').css({ width: Math.ceil(frameWidth / bars),
-                            height: frameHeight,
-                            marginTop: frameHeight,
-                            left: Math.ceil((i * frameWidth / bars)),
+                        $('<div/>').css({ width: Math.ceil(sliderWidth / bars),
+                            height: sliderHeight,
+                            marginTop: sliderHeight,
+                            left: Math.ceil((i * sliderWidth / bars)),
                             position: 'absolute',
                             backgroundImage: 'url(' + getImageSrc(currentImage) + ')',
-                            backgroundPosition: '' + (-(i * frameWidth / bars)) + 'px 0px',
+                            backgroundPosition: '' + (-(i * sliderWidth / bars)) + 'px 0px',
                             opacity: 0
                         }).addClass('quake-el').appendTo(sliderContainer);
                     }
@@ -699,19 +1008,16 @@ License: This software is free for personal and commercial use.
                     });
                 }
                 function animateExplode() {
-                    var factor = 0;
-                    var complete = 0;
-                    var total = rows * cols;
-                    timeFactor = animationSpeed / total;
-                    var w = Math.ceil(frameWidth / cols);
-                    var h = Math.ceil(frameHeight / rows);
+                    timeFactor = animationSpeed / noOfBoxes;
+                    var w = Math.ceil(sliderWidth / cols);
+                    var h = Math.ceil(sliderHeight / rows);
                     var coordinates = new Array();
                     for (var row = 0; row < rows; row++) {
                         for (var col = 0; col < cols; col++) {
                             $('<div/>').css({
                                 width: w, height: h,
-                                left: Math.ceil((frameWidth / 2 - w / 2)),
-                                top: Math.ceil((frameHeight / 2 - h / 2)),
+                                left: Math.ceil((sliderWidth / 2 - w / 2)),
+                                top: Math.ceil((sliderHeight / 2 - h / 2)),
                                 opacity: 0,
                                 position: 'absolute',
                                 backgroundImage: 'url(' + getImageSrc(currentImage) + ')',
@@ -727,26 +1033,23 @@ License: This software is free for personal and commercial use.
                         var p = coordinates[index][0];
                         el.animate({ left: p.left, top: p.top, opacity: 1 }, animationSpeed * 2, function () {
                             complete++;
-                            if (complete == total - 1)
+                            if (complete == noOfBoxes)
                                 animationComplete();
                         });
                         factor += timeFactor;
                     });
                 }
                 function animateExplodeFancy() {
-                    var factor = 0;
-                    var complete = 0;
-                    var total = rows * cols;
-                    timeFactor = animationSpeed / total;
-                    var w = Math.ceil(frameWidth / cols);
-                    var h = Math.ceil(frameHeight / rows);
+                    timeFactor = animationSpeed / noOfBoxes;
+                    var w = Math.ceil(sliderWidth / cols);
+                    var h = Math.ceil(sliderHeight / rows);
                     var coordinates = new Array();
                     for (var row = 0; row < rows; row++) {
                         for (var col = 0; col < cols; col++) {
                             $('<div/>').css({
                                 width: 0, height: 0,
-                                left: Math.ceil((frameWidth / 2 - w / 2)),
-                                top: Math.ceil((frameHeight / 2 - h / 2)),
+                                left: Math.ceil((sliderWidth / 2 - w / 2)),
+                                top: Math.ceil((sliderHeight / 2 - h / 2)),
                                 opacity: 0,
                                 position: 'absolute',
                                 backgroundImage: 'url(' + getImageSrc(currentImage) + ')',
@@ -763,7 +1066,7 @@ License: This software is free for personal and commercial use.
                             var p = coordinates[index][0];
                             el.animate({ left: p.left, top: p.top, opacity: 1, width: w, height: h }, animationSpeed, function () {
                                 complete++;
-                                if (complete == total - 1) {
+                                if (complete == noOfBoxes) {
                                     animationComplete();
                                 }
                             });
@@ -773,8 +1076,8 @@ License: This software is free for personal and commercial use.
                 }
                 function animateFade() {
                     $('<div/>').css({
-                        width: frameWidth,
-                        height: frameHeight,
+                        width: sliderWidth,
+                        height: sliderHeight,
                         backgroundImage: 'url(' + getImageSrc(currentImage) + ')',
                         backgroundPosition: 'center',
                         backgroundRepeat: 'no-repeat',
@@ -785,25 +1088,25 @@ License: This software is free for personal and commercial use.
                         opacity: 0
                     }).addClass('quake-el').appendTo(sliderContainer);
 
-                    // setTimeout(function () {
                     $('.quake-el', sliderContainer).animate({ opacity: 1 }, animationSpeed * 2, function () {
                         animationComplete();
                     });
-                    // }, 100);
                 }
 
-                function animateSlideIn() {
-                    var factor = 0;
-                    var complete = 0;
-                    var bars = cols;
+                function animateSlideIn(reverse) {
+                    var bars = hBars;
+                    //reconsider this condition
+                    if (wBars - hBars >= wBars / 2) {
+                        bars += (hBars / 2);
+                    }
                     for (var i = 0; i < bars; i++) {
-                        $('<div/>').css({ width: frameWidth,
-                            height: Math.ceil(frameHeight / bars),
-                            marginLeft: -frameWidth,
-                            top: Math.ceil((i * frameHeight / bars)),
+                        $('<div/>').css({ width: sliderWidth,
+                            height: Math.ceil(sliderHeight / bars),
+                            marginLeft: reverse ? sliderWidth : -sliderWidth,
+                            top: Math.ceil((i * sliderHeight / bars)),
                             position: 'absolute',
                             backgroundImage: 'url(' + getImageSrc(currentImage) + ')',
-                            backgroundPosition: '0px ' + (-Math.ceil((i * frameHeight / bars))) + 'px',
+                            backgroundPosition: '0px ' + (-Math.ceil((i * sliderHeight / bars))) + 'px',
                             opacity: 0
                         }).addClass('quake-el').appendTo(sliderContainer);
                     }
@@ -823,17 +1126,19 @@ License: This software is free for personal and commercial use.
                 }
 
                 function animateSlideInFancy() {
-                    var factor = 0;
-                    var complete = 0;
-                    var bars = cols;
+                    var bars = hBars;
+                    //reconsider this condition
+                    if (wBars - hBars >= wBars / 2) {
+                        bars += (hBars / 2);
+                    }
                     for (var i = 0; i < bars; i++) {
-                        $('<div/>').css({ width: frameWidth,
-                            height: Math.ceil(frameHeight / bars),
-                            marginLeft: (i % 2 == 0) ? -frameWidth : frameWidth,
-                            top: Math.ceil((i * frameHeight / bars)),
+                        $('<div/>').css({ width: sliderWidth,
+                            height: Math.ceil(sliderHeight / bars),
+                            marginLeft: (i % 2 == 0) ? -sliderWidth : sliderWidth,
+                            top: Math.ceil((i * sliderHeight / bars)),
                             position: 'absolute',
                             backgroundImage: 'url(' + getImageSrc(currentImage) + ')',
-                            backgroundPosition: '0px ' + (-Math.ceil((i * frameHeight / bars))) + 'px',
+                            backgroundPosition: '0px ' + (-Math.ceil((i * sliderHeight / bars))) + 'px',
                             opacity: 0
                         }).addClass('quake-el').appendTo(sliderContainer);
                     }
@@ -851,24 +1156,83 @@ License: This software is free for personal and commercial use.
                         factor += timeFactor;
                     });
                 }
+                function animateChop(animateSize, diagonal, reverse) {
+                    var w = Math.ceil(sliderWidth / cols);
+                    var h = Math.ceil(sliderHeight / rows);
+                    var bars = hBars / 2;
+                    //reconsider this condition
+                    if (wBars - hBars >= wBars / 2) {
+                        bars += (hBars / 2);
+                    }
+                    if (previousImage == null) previousImage = images[images.length - 1];
+                    var divImage = $('<div/>').css({
+                        zIndex: 0,
+                        backgroundImage: 'url(' + getImageSrc(currentImage) + ')',
+                        backgroundPosition: 'center',
+                        backgroundRepeat: 'no-repeat',
+                        position: 'absolute',
+                        width: '100%',
+                        height: '100%',
+                        display: 'none'
+                    }).addClass('quake-fi');
+
+                    for (var i = 0; i < bars; i++) {
+                        $('<div/>').css({ width: sliderWidth,
+                            height: Math.ceil(sliderHeight / bars),
+                            top: Math.ceil((i * sliderHeight / bars)),
+                            position: 'absolute',
+                            backgroundImage: 'url(' + getImageSrc(previousImage) + ')',
+                            backgroundPosition: '0px ' + (-Math.ceil((i * sliderHeight / bars))) + 'px',
+                            zIndex: 2
+                        }).addClass('quake-el').appendTo(sliderContainer);
+                    }
+                    divImage.css('display', 'block');
+                    sliderContainer.append(divImage);
+                    timeFactor = animationSpeed / bars;
+
+                    $('.quake-el', sliderContainer).each(function (i, el) {
+                        var el = $(this);
+                        var ml = (i % 2 == 0) ? -sliderWidth : sliderWidth;
+                        setTimeout(function () {
+                            if (animateSize) {
+                                el.animate({ marginLeft: ml, opacity: 1, height: 0, width: 0 }, animationSpeed, function () {
+                                    complete++;
+                                    if (complete == bars)
+                                        animationComplete();
+                                });
+                            }
+                            else {
+                                if (diagonal) ml = sliderWidth;
+                                if (reverse) ml = -sliderWidth;
+                                el.animate({ marginLeft: ml, opacity: 1 }, animationSpeed, function () {
+                                    complete++;
+                                    if (complete == bars)
+                                        animationComplete();
+                                });
+                            }
+                        }, factor);
+
+                        factor += timeFactor;
+                    });
+                }
                 function animateSlideLeft() {
                     var cImage = $('<div/>').addClass('quake-el').css({
-                        width: frameWidth,
-                        height: frameHeight,
-                        left: frameWidth,
+                        width: sliderWidth,
+                        height: sliderHeight,
+                        left: sliderWidth,
                         top: 0,
                         position: 'absolute',
                         backgroundImage: 'url(' + getImageSrc(currentImage) + ')',
                         backgroundPosition: 'center',
                         backgroundRepeat: 'no-repeat',
                         zIndex: 100,
-                        opacity: 0
+                        opacity: 1
                     });
                     sliderContainer.append(cImage)
                     if (previousImage != null) {
                         var pImage = $('<div/>').addClass('quake-el').css({
-                            width: frameWidth,
-                            height: frameHeight,
+                            width: sliderWidth,
+                            height: sliderHeight,
                             left: 0,
                             top: 0,
                             position: 'absolute',
@@ -879,37 +1243,32 @@ License: This software is free for personal and commercial use.
                         });
                         sliderContainer.append(pImage);
                     }
-
-                    var complete = 0;
-
-                    $('.quake-el', sliderContainer).animate({ left: '-=' + frameWidth, opacity: 1 }, animationSpeed, function () {
+                    $('.quake-el', sliderContainer).animate({ left: '-=' + sliderWidth, opacity: 1 }, animationSpeed, function () {
 
                         complete++;
                         if (complete == 1)
                             animationComplete();
-
                     })
-
                 }
 
                 function animateSlideRight() {
                     var cImage = $('<div/>').addClass('quake-el').css({
-                        width: frameWidth,
-                        height: frameHeight,
-                        left: -frameWidth,
+                        width: sliderWidth,
+                        height: sliderHeight,
+                        left: -sliderWidth,
                         top: 0,
                         position: 'absolute',
                         backgroundImage: 'url(' + getImageSrc(currentImage) + ')',
                         backgroundPosition: 'center',
                         backgroundRepeat: 'no-repeat',
                         zIndex: 100,
-                        opacity: 0
+                        opacity: 1
                     });
                     sliderContainer.append(cImage);
                     if (previousImage != null) {
                         var pImage = $('<div/>').addClass('quake-el').css({
-                            width: frameWidth,
-                            height: frameHeight,
+                            width: sliderWidth,
+                            height: sliderHeight,
                             left: 0,
                             top: 0,
                             position: 'absolute',
@@ -920,34 +1279,30 @@ License: This software is free for personal and commercial use.
                         });
                         sliderContainer.append(pImage);
                     }
-
-                    var complete = 0;
-                    $('.quake-el', sliderContainer).animate({ left: '+=' + frameWidth, opacity: 1 }, animationSpeed, function () {
-
+                    $('.quake-el', sliderContainer).animate({ left: '+=' + sliderWidth, opacity: 1 }, animationSpeed, function () {
                         complete++;
                         if (complete == 1)
                             animationComplete();
-
                     })
                 }
                 function animateSlideDown() {
                     var cImage = $('<div/>').addClass('quake-el').css({
-                        width: frameWidth,
-                        height: frameHeight,
+                        width: sliderWidth,
+                        height: sliderHeight,
                         left: 0,
-                        top: -frameHeight,
+                        top: -sliderHeight,
                         position: 'absolute',
                         backgroundImage: 'url(' + getImageSrc(currentImage) + ')',
                         backgroundPosition: 'center',
                         backgroundRepeat: 'no-repeat',
                         zIndex: 100,
-                        opacity: 0
+                        opacity: 1
                     });
                     sliderContainer.append(cImage);
                     if (previousImage != null) {
                         var pImage = $('<div/>').addClass('quake-el').css({
-                            width: frameWidth,
-                            height: frameHeight,
+                            width: sliderWidth,
+                            height: sliderHeight,
                             left: 0,
                             top: 0,
                             position: 'absolute',
@@ -958,33 +1313,30 @@ License: This software is free for personal and commercial use.
                         });
                         sliderContainer.append(pImage);
                     }
-                    var complete = 0;
-                    $('.quake-el', sliderContainer).animate({ top: '+=' + frameHeight, opacity: 1 }, animationSpeed, function () {
-
+                    $('.quake-el', sliderContainer).animate({ top: '+=' + sliderHeight, opacity: 1 }, animationSpeed, function () {
                         complete++;
                         if (complete == 1)
                             animationComplete();
-
                     })
                 }
                 function animateSlideUp() {
                     var cImage = $('<div/>').addClass('quake-el').css({
-                        width: frameWidth,
-                        height: frameHeight,
+                        width: sliderWidth,
+                        height: sliderHeight,
                         left: 0,
-                        top: frameHeight,
+                        top: sliderHeight,
                         position: 'absolute',
                         backgroundImage: 'url(' + getImageSrc(currentImage) + ')',
                         backgroundPosition: 'center',
                         backgroundRepeat: 'no-repeat',
                         zIndex: 100,
-                        opacity: 0
+                        opacity: 1
                     });
                     sliderContainer.append(cImage);
                     if (previousImage != null) {
                         var pImage = $('<div/>').addClass('quake-el').css({
-                            width: frameWidth,
-                            height: frameHeight,
+                            width: sliderWidth,
+                            height: sliderHeight,
                             left: 0,
                             top: 0,
                             position: 'absolute',
@@ -996,14 +1348,11 @@ License: This software is free for personal and commercial use.
                         sliderContainer.append(pImage);
                     }
                     sliderContainer.append(cImage).append(pImage);
-                    var complete = 0;
-                    //setTimeout(function () {
-                    $('.quake-el', sliderContainer).animate({ top: '-=' + frameHeight, opacity: 1 }, animationSpeed, function () {
+                    $('.quake-el', sliderContainer).animate({ top: '-=' + sliderHeight, opacity: 1 }, animationSpeed, function () {
                         complete++;
                         if (complete == 1)
                             animationComplete();
-                    })
-                    //}, 100);
+                    });
                 }
 
                 function animationComplete() {
@@ -1018,6 +1367,61 @@ License: This software is free for personal and commercial use.
                     isAnimating = false;
                 }
                 //Utility functions
+                function hideIt(i) {
+                    var index = circles - i;
+                    var op = index + 1;
+                    op /= 10;
+                    op = 1 - op;
+                    $('.quake-el:eq(' + index + ')', sliderContainer).animate({ opacity: op }, timeFactor, function () {
+                        if (i < $('.quake-el', sliderContainer).length - 1) {
+                            i++;
+                            hideIt(i);
+                        }
+                        else {
+                            $('.quake-el', sliderContainer).animate({ opacity: 0 }, animationSpeed);
+                            setTimeout(animationComplete, (animationSpeed + 1));
+                        }
+                    });
+                }
+                //Excellent out of the box code form Jordan http://codereview.stackexchange.com/users/7249/jordan
+
+                function spiralify(matrix) {
+                    // stop case--if there is only one row, return the row
+                    if (matrix.length == 1) {
+                        return matrix[0];
+                    }
+
+                    var firstRow = matrix[0]
+                            , numRows = matrix.length
+
+                    // we're going to rotate the remaining rows and put them
+                    // in this new array
+                            , nextMatrix = []
+                            , newRow
+                            , rowIdx
+                            , colIdx = matrix[1].length - 1;
+
+                    // here's where we do the actual rotation
+
+                    // take each column starting with the last and working backwards
+                    for (colIdx; colIdx >= 0; colIdx--) {
+                        // an array to store the rotated row we'll make from this column
+                        newRow = [];
+
+                        // take each row starting with 1 (the second)
+                        for (rowIdx = 1; rowIdx < numRows; rowIdx++) {
+                            // ...and add the item at colIdx to newRow
+                            newRow.push(matrix[rowIdx][colIdx]);
+                        }
+
+                        nextMatrix.push(newRow);
+                    }
+
+                    // pass nextMatrix to spiralify and join the result to firstRow
+                    firstRow.push.apply(firstRow, spiralify(nextMatrix));
+
+                    return firstRow;
+                }
                 function swapDirection(index) {
                     if (index % cols == 0) {
                         currentRow++;
@@ -1028,8 +1432,8 @@ License: This software is free for personal and commercial use.
                     }
                 }
                 function createBoxes() {
-                    var w = frameWidth / cols;
-                    var h = frameHeight / rows;
+                    var w = sliderWidth / cols;
+                    var h = sliderHeight / rows;
                     if (w % 10 > 0) {
                         w = parseInt(w);
                         w++;
@@ -1038,8 +1442,7 @@ License: This software is free for personal and commercial use.
                         h = parseInt(h);
                         h++;
                     }
-                    var totalBoxes = cols * rows;
-                    timeFactor = animationSpeed / totalBoxes;
+                    timeFactor = animationSpeed / noOfBoxes;
                     for (var i = 0; i < rows; i++) {
                         for (var j = 0; j < cols; j++) {
                             var box = $('<div/>').css({
@@ -1073,7 +1476,7 @@ License: This software is free for personal and commercial use.
                     //image index will be equal to currentImage for swirlFadeIn, which has waves effect
                     //incrementing minCircumeference to one will remove the wave effect, so, before incrementing
                     //check whether its fade in or fade out animation, which is determined by comparing imageIndex with currentImage
-                    minCircumeference = frameWidth / circles;
+                    minCircumeference = sliderWidth / circles;
                     if (minCircumeference % 2 != 0 && imageIndex != currentImageIndex) minCircumeference++;
                     zindex = 100;
                     timeFactor = animationSpeed / circles;
@@ -1098,16 +1501,10 @@ License: This software is free for personal and commercial use.
                         if (currentImageIndex < orientationsCount)
                             orientation = settings.captionOrientations[currentImageIndex];
 
-                        captionContainer.removeAttr('style').removeClass('quake-slider-caption-container-left')
-                                            .removeClass('quake-slider-caption-container-top')
-                                            .removeClass('quake-slider-caption-container-bottom')
-                                            .removeClass('quake-slider-caption-container-right');
+                        captionContainer.removeAttr('style').removeClass('vertical left right bottom top horizontal');
 
                         captionContainer.parent().find('.quake-slider-caption').remove();
-                        var caption = captions.eq(currentImageIndex).removeAttr('style').css('opacity', '0').removeClass('quake-slider-caption-right')
-                                                                                            .removeClass('quake-slider-caption-left')
-                                                                                            .removeClass('quake-slider-caption-top')
-                                                                                            .removeClass('quake-slider-caption-bottom')                        //.addClass('quake-slider-caption-' + orientation);
+                        var caption = captions.eq(currentImageIndex).removeAttr('style').css('opacity', '0').removeClass('vertical left right bottom top horizontal');
                         captionContainer.after(caption);
                         if (settings.captionsSetup == null) {
                             captionDefaultAnimation(captionContainer, caption, orientation);
@@ -1117,8 +1514,9 @@ License: This software is free for personal and commercial use.
                             var config = getConfiguration(currentImageIndex);
                             if (config != null) {
                                 if (config.orientation != null) orientation = config.orientation;
-                                captionContainer.addClass('quake-slider-caption-container-' + orientation).show().css('opacity', settings.captionOpacity);
-                                caption.addClass('quake-slider-caption-' + orientation).css({ opacity: 1 });
+                                setOrientation(captionContainer, caption, orientation);
+                                captionContainer.show().css('opacity', settings.captionOpacity);
+                                caption.css({ opacity: 1 });
                                 if (config.callback != null)
                                     config.callback(captionContainer, caption, orientation);
                                 else
@@ -1135,15 +1533,6 @@ License: This software is free for personal and commercial use.
                         });
                     }
                 }
-                //                function getConfiguration(orientation) {
-                //                    if (settings.captionsSetup == null) return null;
-                //                    var setups = eval(settings.captionsSetup);
-                //                    for (var i = 0; i < setups.length; i++) {
-                //                        if (setups[i].orientation == orientation)
-                //                            return setups[i];
-                //                    }
-                //                    return null;
-                //                }
                 function getConfiguration(slide) {
                     if (settings.captionsSetup == null) return null;
                     var setups = eval(settings.captionsSetup);
@@ -1155,27 +1544,45 @@ License: This software is free for personal and commercial use.
                     }
                     return null;
                 }
-                function captionDefaultAnimation(captionContainer, caption, orientation) {
-                    captionContainer.addClass('quake-slider-caption-container-' + orientation).show().css('opacity', '0').stop(true, true).animate({ opacity: settings.captionOpacity }, settings.captionAnimationSpeed);
-                    caption.addClass('quake-slider-caption-' + orientation).stop(true, true).animate({ opacity: 1 }, settings.captionAnimationSpeed);
+                function setOrientation(captionContainer, caption, orientation) {
+                    var cls;
+                    if (orientation == 'top') cls = 'horizontal top';
+                    if (orientation == 'bottom') cls = 'horizontal bottom';
+                    if (orientation == 'left') cls = 'vertical left';
+                    if (orientation == 'right') cls = 'vertical right';
+                    captionContainer.addClass('quake-slider-caption-container ' + cls);
+                    caption.addClass('quake-slider-caption ' + cls);
                 }
+                function captionDefaultAnimation(captionContainer, caption, orientation) {
+                    setOrientation(captionContainer, caption, orientation);
+                    captionContainer.show().css('opacity', '0').stop(true, true).animate({ opacity: settings.captionOpacity }, settings.captionAnimationSpeed);
+                    caption.stop(true, true).animate({ opacity: 1 }, settings.captionAnimationSpeed);
+                }
+                var initialized = false;
+                var currentEffectIndex = 0;
                 function runAnimation() {
-
                     if (!isAnimating) {
                         isAnimating = true;
                         currentRow = 0;
-                        var index = Math.floor(Math.random() * (effects.length));
-                        currentEffect = effects[index];
+                        if (settings.applyEffectsRandomly) {
+                            var index = Math.floor(Math.random() * (effects.length));
+                            currentEffect = effects[index];
+                        }
+                        else
+                            currentEffect = effects[currentEffectIndex];
                         if (currentEffect == undefined) currentEffect = 'randomFade';
                         //set active status
                         $('.quake-nav-container a').removeClass('active').eq(currentImageIndex).addClass('active');
-                        //display caption                     
-
+                        //display caption                  
                         animateCaption();
-
                         currentImage = images[currentImageIndex];
-                        //sliderContainer.find('.quake-full').css('z-index', '0');
+                        factor = 0;
+                        complete = 0;
+                        if (!initialized) { initialized = true; previousImageIndex = images.length - 1; }
                         switch (currentEffect) {
+                            case 'slabs':
+                                animateSlabs();
+                                break;
                             case 'randomFade':
                                 animateRandomFade();
                                 break;
@@ -1188,6 +1595,9 @@ License: This software is free for personal and commercial use.
                             case 'linearPealReverse':
                                 animateReversePeal();
                                 break;
+                            case 'linearPealReverseDimensions':
+                                animateReversePealDimensions();
+                                break;
                             case 'swirlFadeIn':
                                 animateSwirlFadeIn();
                                 break;
@@ -1195,10 +1605,22 @@ License: This software is free for personal and commercial use.
                                 animateSwirlFadeOut();
                                 break;
                             case 'diagonalFade':
-                                animateDiagonally();
+                                animateDiagonally(false, false);
+                                break;
+                            case 'diagonalFadeReverse':
+                                animateDiagonally(true, false);
+                                break;
+                            case 'diagonalShow':
+                                animateDiagonally(false, true);
+                                break;
+                            case 'diagonalShowReverse':
+                                animateDiagonally(true, true);
                                 break;
                             case 'blind':
                                 animateBlind();
+                                break;
+                            case 'blindHorizontal':
+                                animateBlindHorizontal();
                                 break;
                             case 'blindFade':
                                 animateBlindFade();
@@ -1216,7 +1638,10 @@ License: This software is free for personal and commercial use.
                                 animateBarUp();
                                 break;
                             case 'barsDown':
-                                animateBarDown();
+                                animateBarsDown(false);
+                                break;
+                            case 'barsDownReverse':
+                                animateBarsDown(true);
                                 break;
                             case 'mixBars':
                                 animateMixBars();
@@ -1225,7 +1650,10 @@ License: This software is free for personal and commercial use.
                                 animateMixBarsFancy();
                                 break;
                             case 'slideIn':
-                                animateSlideIn();
+                                animateSlideIn(false);
+                                break;
+                            case 'slideInReverse':
+                                animateSlideIn(true);
                                 break;
                             case 'slideInFancy':
                                 animateSlideInFancy();
@@ -1248,17 +1676,215 @@ License: This software is free for personal and commercial use.
                             case 'raisingBlindFade':
                                 animateRaisingBlindFade();
                                 break;
+                            case 'spiral':
+                                animateSpiral(false, false);
+                                break;
+                            case 'spiralReverse':
+                                animateSpiral(true, false);
+                                break;
+                            case 'spiralDimension':
+                                animateSpiral(false, true);
+                                break;
+                            case 'spiralReverseDimension':
+                                animateSpiral(true, true);
+                                break;
+                            case 'linearPealDimensions':
+                                animateLinearPealDimensions();
+                                break;
+                            case 'chop':
+                                animateChop(false, false, false);
+                                break;
+                            case 'chopDimensions':
+                                animateChop(true, false, false);
+                                break;
+                            case 'chopDiagonal':
+                                animateChop(false, true, false);
+                                break;
+                            case 'chopDiagonalReverse':
+                                animateChop(false, false, true);
+                                break;
+                            case 'randomDimensions':
+                                animateRandomFadeDimensions();
+                                break;
+                            case 'boxes':
+                                animateBoxes();
+                                break;
+                            case 'swirlFadeOutRotate':
+                                animateSwirlFadeOutRotate(false);
+                                break;
+                            case 'swirlFadeOutRotateFancy':
+                                animateSwirlFadeOutRotate(true);
+                                break;
+                            case 'swirlFadeInDimensions':
+                                animateSwirlFadeInDimensions();
+                                break;
+                            case 'boxFadeIn':
+                                animateBoxFadeIn();
+                                break;
+                            case 'boxFadeOutOriginal':
+                                animateBoxFadeOutOriginal(false);
+                                break;
+                            case 'boxFadeOutOriginalRotate':
+                                animateBoxFadeOutOriginal(true);
+                                break;
                         }
                         previousImage = currentImage;
                         previousImageIndex = currentImageIndex;
                         currentImageIndex++;
                         if (currentImageIndex == images.length)
                             currentImageIndex = 0;
+                        currentEffectIndex++;
+                        if (currentEffectIndex == effects.length)
+                            currentEffectIndex = 0;
+                        //if (!initialized) { initialized = true; currentEffectIndex = 0; }
                     }
-
 
                 }
             });
         }
     });
+
+    // Monkey patch jQuery 1.3.1+ to add support for setting or animating CSS
+    // scale and rotation independently.
+    // 2009-2010 Zachary Johnson www.zachstronaut.com
+    // Updated 2010.11.06
+    var rotateUnits = 'deg';
+
+    $.fn.rotate = function (val) {
+        var style = $(this).css('transform') || 'none';
+        if (typeof val == 'undefined') {
+            if (style) {
+                var m = style.match(/rotate\(([^)]+)\)/);
+                if (m && m[1]) {
+                    return m[1];
+                }
+            }
+            return 0;
+        }
+        var m = val.toString().match(/^(-?\d+(\.\d+)?)(.+)?$/);
+        if (m) {
+            if (m[3]) rotateUnits = m[3];
+            $(this).css('transform',
+                style.replace(/none|rotate\([^)]*\)/, '') + 'rotate(' + m[1] + rotateUnits + ')'
+            );
+        }
+
+        return this;
+    };
+
+    // Note that scale is unitless.
+    $.fn.scale = function (val, duration, options) {
+        var style = $(this).css('transform');
+        if (typeof val == 'undefined') {
+            if (style) {
+                var m = style.match(/scale\(([^)]+)\)/);
+                if (m && m[1]) {
+                    return m[1];
+                }
+            }
+            return 1;
+        }
+        $(this).css('transform',
+            style.replace(/none|scale\([^)]*\)/, '') + 'scale(' + val + ')'
+        );
+        return this;
+    };
+
+    // fx.cur() must be monkey patched because otherwise it would always
+    // return 0 for current rotate and scale values
+    var curProxied = $.fx.prototype.cur;
+    $.fx.prototype.cur = function () {
+        if (this.prop == 'rotate') {
+            return parseFloat($(this.elem).rotate());
+        }
+        else if (this.prop == 'scale') {
+            return parseFloat($(this.elem).scale());
+        }
+        return curProxied.apply(this, arguments);
+    };
+
+    $.fx.step.rotate = function (fx) {
+        $(fx.elem).rotate(fx.now + rotateUnits);
+    };
+
+    $.fx.step.scale = function (fx) {
+        $(fx.elem).scale(fx.now);
+    };
+
+    var animateProxied = $.fn.animate;
+    $.fn.animate = function (prop) {
+        if (typeof prop['rotate'] != 'undefined') {
+            var m = prop['rotate'].toString().match(/^(([+-]=)?(-?\d+(\.\d+)?))(.+)?$/);
+            if (m && m[5]) {
+                rotateUnits = m[5];
+            }
+            prop['rotate'] = m[1];
+        }
+
+        return animateProxied.apply(this, arguments);
+    };
+
+    // Monkey patch jQuery 1.3.1+ css() method to support CSS 'transform'
+    // property uniformly across Safari/Chrome/Webkit, Firefox 3.5+, IE 9+, and Opera 11+.
+    // 2009-2011 Zachary Johnson www.zachstronaut.com
+    // Updated 2011.05.04 (May the fourth be with you!)
+    function getTransformProperty(element) {
+        var properties = ['transform', 'WebkitTransform', 'msTransform', 'MozTransform', 'OTransform'];
+        var p;
+        while (p = properties.shift()) {
+            if (typeof element.style[p] != 'undefined') {
+                return p;
+            }
+        }
+        return 'transform';
+    };
+
+    var _propsObj = null;
+
+    var proxied = $.fn.css;
+    $.fn.css = function (arg, val) {
+        if (_propsObj === null) {
+            if (typeof $.cssProps != 'undefined') {
+                _propsObj = $.cssProps;
+            }
+            else if (typeof $.props != 'undefined') {
+                _propsObj = $.props;
+            }
+            else {
+                _propsObj = {};
+            }
+        }
+        if
+        (
+            typeof _propsObj['transform'] == 'undefined'
+            &&
+            (
+                arg == 'transform'
+                ||
+                (
+                    typeof arg == 'object'
+                    && typeof arg['transform'] != 'undefined'
+                )
+            )
+        ) {
+            _propsObj['transform'] = getTransformProperty(this.get(0));
+        }
+        if (_propsObj['transform'] != 'transform') {
+            if (arg == 'transform') {
+                arg = _propsObj['transform'];
+                if (typeof val == 'undefined' && jQuery.style) {
+                    return jQuery.style(this.get(0), arg);
+                }
+            }
+            else if
+            (
+                typeof arg == 'object'
+                && typeof arg['transform'] != 'undefined'
+            ) {
+                arg[_propsObj['transform']] = arg['transform'];
+                delete arg['transform'];
+            }
+        }
+        return proxied.apply(this, arguments);
+    };
 })(jQuery);

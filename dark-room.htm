@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <title>The most awesome jQuery Image Slider Plugin: Quake Image Slider</title>
+    <link href="style/reset.css" media="screen" rel="stylesheet" type="text/css" />
+    <link href="style/site.css" media="screen" rel="stylesheet" type="text/css" />
+    <link href="css/quake.slider.css" rel="stylesheet" type="text/css" />
+    <link href="skins/dark-room/quake.skin.css" rel="stylesheet" type="text/css" />
+    <script src="js/jquery.min.js" type="text/javascript"></script>
+    <script src="js/quake.slider-min.js" type="text/javascript"></script>
+    <script src="js/demo.js" type="text/javascript"></script>
+    <script type="text/javascript">
+        $(document).ready(function () {
+            $('.quake-slider').quake({
+                thumbnails: true,
+                animationSpeed: 500,
+                applyEffectsRandomly: true,
+                navPlacement: 'inside',
+                navAlwaysVisible: true,
+                captionOpacity: '0.3',
+                captionsSetup: [
+                                 {
+                                     "orientation": "top",
+                                     "slides": [0, 1],
+                                     "callback": captionAnimateCallback
+                                 },
+                                  {
+                                      "orientation": "left",
+                                      "slides": [2, 3],
+                                      "callback": captionAnimationCallback1
+                                  }
+                                  ,
+                                  {
+                                      "orientation": "bottom",
+                                      "slides": [4, 5],
+                                      "callback": captionAnimateCallback
+                                  }
+                                  ,
+                                  {
+                                      "orientation": "right",
+                                      "slides": [6, 7],
+                                      "callback": captionAnimationCallback1
+                                  }
+                                ]
+
+            });
+
+            function captionAnimateCallback(captionWrapper, captionContainer, orientation) {
+                captionWrapper.css({ left: '-990px' }).stop(true, true).animate({ left: 0 }, 500);
+                captionContainer.css({ left: '-990px' }).stop(true, true).animate({ left: 0 }, 500);
+            }
+            function captionAnimationCallback1(captionWrapper, captionContainer, orientation) {
+                captionWrapper.css({ top: '-330px' }).stop(true, true).animate({ top: 0 }, 500);
+                captionContainer.css({ top: '-330px' }).stop(true, true).animate({ top: 0 }, 500);
+            }
+        });
+    </script>
+    <style type="text/css">
+        .interactive
+        {
+            background-image: url(images/dark-room-bg.jpg) !important;
+        }
+        #intro .tagline h3
+        {
+            color: white !important;
+            padding: 18px 0;
+            font-size: 1.2em;
+            margin-bottom: 36px;
+            line-height: 1.5;
+        }
+        #intro .tagline h2, #intro .tagline h3
+        {
+            color: white !important;
+            text-shadow: 0 1px 1px #4B4B4B;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- header -->
+    <div id="body-wrapper">
+        <div id="header">
+            <div class="mCont">
+                <div class="fleft">
+                    <h1>
+                        <a href="http://www.egrappler.com/jquery-image-slider-plugin-with-cool-transition-effects-quake-slider">jQuery Image Slider Plugin With Cool Transitions Effects</a></h1>
+                    <p class="headtag">
+                    </p>
+                </div>
+                <div class="fright top-menu">
+                    <ul>
+                        <li><a href="http://www.egrappler.com/jquery-image-slider-plugin-with-cool-transition-effects-quake-slider">Home</a></li>
+                        <li><a href="#">Demos</a>
+                            <ul>
+                                <li><a href="plain.htm">Plain Theme</a></li>
+                                <li><a href="dark-room.htm">Dark Room Theme</a></li>
+                                <li><a href="violet.htm">Violet Theme</a></li>
+                                <li><a href="circular.htm">Circular Effects</a></li>
+                                <li><a href="box.htm">Box Effects</a></li>
+                                <li><a href="bars.htm">Bars Effects</a></li>
+                                <li><a href="misc.htm">Misc Effects</a></li>
+                                <li style="visibility: hidden; margin-top: 10px;"><a href="#"></a></li>
+                            </ul>
+                        </li>
+                       
+                    </ul>
+                </div>
+            </div>
+        </div>
+        <!-- /header -->
+        <div id="intro" class="interactive">
+            <div class="mCont">
+                <div class="tagline">
+                    <h2>
+                        The Most Awesome Image Slider</h2>
+                    <h3>
+                        Quake Image Slider is a free open source jQuery plugin that lets you easily create
+                        powerful javascript slider with 40+ transition effects. Enhance your website by
+                        adding a unique and attractive slider!</h3>
+                </div>
+                <!-- Quake Image Slider -->
+                <div class="quake-slider">
+                    <div class="quake-slider-images">
+                        <a target="_blank" href="javascript:">
+                            <img src="images/nature/1.jpg" alt="" />
+                        </a><a target="_blank" href="javascript:">
+                            <img src="images/nature/2.jpg" alt="" /></a>
+                        <a target="_blank" href="javascript:">
+                            <img src="images/nature/3.jpg" alt="" />
+                        </a><a target="_blank" href="javascript:">
+                            <img src="images/nature/4.jpg" alt="" />
+                        </a><a target="_blank" href="javascript:">
+                            <img src="images/nature/5.jpg" alt="" />
+                        </a>
+                    </div>
+                    <div class="quake-slider-captions">
+                        <div class="quake-slider-caption">
+                            This is a caption. You can put HTML here.
+                        </div>
+                        <div class="quake-slider-caption">
+                            This is a caption. You can put HTML here.
+                        </div>
+                        <div class="quake-slider-caption">
+                            This is a caption. You can put HTML here.
+                        </div>
+                        <div class="quake-slider-caption">
+                            This is a caption. You can put HTML here.
+                        </div>
+                        <div class="quake-slider-caption">
+                            This is a caption. You can put HTML here.
+                        </div>
+                    </div>
+                </div>
+                <!-- /Quake Image Slider -->
+            </div>
+        </div>
+        <div id="main-content">
+            <div class="mCont">
+                <div class="section PTB40 MT5">
+                    <!-- /features -->
+                    <div id="features">
+                        <ul>
+                            <li class="donefffeciently">
+                                <h3>
+                                    Done Effeciently</h3>
+                                <p>
+                                    &nbsp;
+                                </p>
+                                <span class="featureIcon"></span></li>
+                            <li class="beautifuldesign">
+                                <h3>
+                                    Beautiful Design</h3>
+                                <p>
+                                    &nbsp;
+                                </p>
+                                <span class="featureIcon"></span></li>
+                            <li class="supereasy odd">
+                                <h3>
+                                    Super Easy to Use</h3>
+                                <p>
+                                    &nbsp;
+                                </p>
+                                <span class="featureIcon"></span></li>
+                            <li class="qualitycode MT40">
+                                <h3>
+                                    Open Source
+                                </h3>
+                                <p>
+                                    &nbsp;
+                                </p>
+                                <span class="featureIcon"></span></li>
+                            <li class="saveyourtime MT40">
+                                <h3>
+                                    Saves Your Time</h3>
+                                <p>
+                                    &nbsp;
+                                </p>
+                                <span class="featureIcon"></span></li>
+                            <li class="support MT40 odd">
+                                <h3>
+                                    24x7 Support</h3>
+                                <p>
+                                    &nbsp;
+                                </p>
+                                <span class="featureIcon"></span></li>
+                        </ul>
+                    </div>
+                    <!-- /features -->
+                </div>
+            </div>
+        </div>
+        <!-- social -->
+        <div id="sub-footer" class="section">
+            <div id="sub-footer-contents">
+                <h3>
+                    It's time to grow up the garden my friend!</h3>
+                <ul class="social">
+                    <li><a href="http://www.facebook.com/pages/EGrappler/344326175587989">
+                        <img src="images/facebook.png" width="64" height="64" class="imgHoverable" alt="Facebook"></a></li>
+                    <li><a href="http://twitter.com/egrappler">
+                        <img src="images/twitter.png" width="64" height="64" class="imgHoverable" alt="Twitter"></a></li>
+                    <li><a href="http://pk.linkedin.com/pub/muhammad-shahbaz-saleem/5/b78/550">
+                        <img src="images/in.png" width="64" height="64" class="imgHoverable" alt="LinkedIN"></a></li>
+                </ul>
+                <div class="clear">
+                </div>
+            </div>
+        </div>
+        <!-- /social-->
+        <div class="copyright">
+            <div class="mCont">
+                &copy; Quake Image Slider by eGrappler.com. Some Rights Reserved.
+            </div>
+        </div>
+    </div>
+  	<div id="demo-side-bar">
+   <?php include("http://www.egrappler.com/ad-sidebar.php");?>
+   </div>
+    </div>
+    <!--wrapper end-->
+	<!--Dynamically creates analytics markup-->
+	 <?php include("http://www.egrappler.com/analytics.php");?>
+</body>
+</html>

@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <title>The most awesome jQuery Image Slider Plugin: Quake Image Slider</title>
+    <link href="css/demo.css" rel="stylesheet" type="text/css" />
+    <link href="css/quake.slider.css" rel="stylesheet" type="text/css" />
+    <link href="skins/violet/quake.skin.css" rel="stylesheet" type="text/css" />
+    <script src="js/jquery.min.js" type="text/javascript"></script>
+    <script src="js/quake.slider-min.js" type="text/javascript"></script>
+    <script src="js/demo.js" type="text/javascript"></script>
+    <script type="text/javascript">
+        $(document).ready(function () {
+            $('.quake-slider').quake({
+                thumbnails: true,
+                animationSpeed: 500,
+                applyEffectsRandomly: true,
+                navPlacement: 'outside',
+                navAlwaysVisible: true,
+                captionOpacity: '0.8'
+            });
+        });
+    </script>
+</head>
+<body class="violet">
+    <div class="wrapper">
+        <div class="logo">
+            <img src="images/violet-logo.png" />
+        </div>
+        <!-- Quake Image Slider -->
+        <div class="quake-slider">
+            <div class="quake-slider-images">
+                <a target="_blank" href="javascript:">
+                    <img src="images/cartoons/1.jpg" alt="" />
+                </a><a target="_blank" href="javascript:">
+                    <img src="images/cartoons/2.jpg" alt="" /></a> <a target="_blank" href="javascript:">
+                        <img src="images/cartoons/3.jpg" alt="" />
+                    </a><a target="_blank" href="javascript:">
+                        <img src="images/cartoons/4.jpg" alt="" />
+                    </a><a target="_blank" href="javascript:">
+                        <img src="images/cartoons/5.jpg" alt="" />
+                    </a>
+            </div>
+            <div class="quake-slider-captions">
+                <div class="quake-slider-caption">
+                    This is a caption. You can put HTML here.
+                </div>
+                <div class="quake-slider-caption">
+                    This is a caption. You can put HTML here.
+                </div>
+                <div class="quake-slider-caption">
+                    This is a caption. You can put HTML here.
+                </div>
+                <div class="quake-slider-caption">
+                    This is a caption. You can put HTML here.
+                </div>
+                <div class="quake-slider-caption">
+                    This is a caption. You can put HTML here.
+                </div>
+            </div>
+        </div>
+        <!-- /Quake Image Slider -->
+    </div>
+</body>
+</html>

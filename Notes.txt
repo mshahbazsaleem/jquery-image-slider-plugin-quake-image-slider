@@ -1,0 +1,6 @@
+﻿Bug fixes for animations
+CSS fixes
+Skins added
+New animations added
+Removal of extra parameters(sliderWidth and height both are auto picked now)
+Made sliding captions as part of the slider

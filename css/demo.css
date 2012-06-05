@@ -1,7 +1,21 @@
-﻿body
+﻿img
 {
-    background: url(../images/bg.jpg);
-    width:100%;
+    border: none;
+}
+body.plain
+{
+    background: url(../images/plain-bg.jpg);
+    width: 100%;
+}
+body.dark-room
+{
+    background: url(../images/dark-room-bg.jpg);
+    width: 100%;
+}
+body.violet
+{
+    background: url(../images/violet-bg.jpg);
+    width: 100%;
 }
 .wrapper
 {
@@ -11,12 +25,15 @@
 }
 .logo
 {
-    width: 483px;
+    width: 630px;
     margin: 0 auto;
+    margin-bottom: 20px;
 }
 .clear
 {
-    clear: both; margin:0; padding:0;
+    clear: both;
+    margin: 0;
+    padding: 0;
 }
 .more-demos
 {
@@ -33,7 +50,7 @@
     height: 200px;
     margin: 20px 105px 50px 0px;
     float: left;
-    cursor:pointer;
+    cursor: pointer;
 }
 
 .item a.last
@@ -41,10 +58,32 @@
     margin-right: 0px;
 }
 
-.labels{margin:0; padding:0; margin-top:40px; float:left;}
-.labels li { display:inline; float:left; width:365px; font-family:Helvetica,  Arial, sans-serif; font-size:20px; font-weight:bold;}
-.labels li.last { width:250px;  }
+.labels
+{
+    margin: 0;
+    padding: 0;
+    margin-top: 40px;
+    float: left;
+}
+.labels li
+{
+    display: inline;
+    float: left;
+    width: 365px;
+    font-family: Helvetica, Arial, sans-serif;
+    font-size: 20px;
+    font-weight: bold;
+}
+.labels li.last
+{
+    width: 250px;
+}
 .demo-side-bar
 {
-float:right!important;    
-    }
+    float: right !important;
+}
+
+.quake-slider-wrapper
+{
+    background-color: White;
+}
